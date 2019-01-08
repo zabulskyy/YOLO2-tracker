@@ -135,20 +135,20 @@ def get_region_boxes(output, conf_thresh, num_classes, anchors, num_anchors, onl
     # print("embed shape:", embed[0].shape)
 
     grid_x = torch.linspace(0, w - 1, w).repeat(h, 1).repeat(batch * num_anchors, 1, 1).view(
-        batch * num_anchors * h * w)
+        batch * num_anchors * h * w).cuda()
     grid_y = torch.linspace(0, h - 1, h).repeat(w, 1).t().repeat(batch * num_anchors, 1, 1).view(
-        batch * num_anchors * h * w)
+        batch * num_anchors * h * w).cuda()
     xs = torch.sigmoid(output[0]) + grid_x
     ys = torch.sigmoid(output[1]) + grid_y
 
-    anchor_w = torch.Tensor(anchors).view(num_anchors, anchor_step).index_select(1, torch.LongTensor([0]))
-    anchor_h = torch.Tensor(anchors).view(num_anchors, anchor_step).index_select(1, torch.LongTensor([1]))
-    anchor_w = anchor_w.repeat(batch, 1).repeat(1, 1, h * w).view(batch * num_anchors * h * w)
-    anchor_h = anchor_h.repeat(batch, 1).repeat(1, 1, h * w).view(batch * num_anchors * h * w)
+    anchor_w = torch.Tensor(anchors).view(num_anchors, anchor_step).index_select(1, torch.LongTensor([0])).cuda()
+    anchor_h = torch.Tensor(anchors).view(num_anchors, anchor_step).index_select(1, torch.LongTensor([1])).cuda()
+    anchor_w = anchor_w.repeat(batch, 1).repeat(1, 1, h * w).view(batch * num_anchors * h * w).cuda()
+    anchor_h = anchor_h.repeat(batch, 1).repeat(1, 1, h * w).view(batch * num_anchors * h * w).cuda()
     ws = torch.exp(output[2]) * anchor_w
     hs = torch.exp(output[3]) * anchor_h
 
-    det_confs = torch.sigmoid(output[4])
+    det_confs = torch.sigmoid(output[4]).cuda()
 
     cls_confs = torch.nn.Softmax()(Variable(output[5:5 + num_classes].transpose(0, 1))).data
     cls_max_confs, cls_max_ids = torch.max(cls_confs, 1)
@@ -198,6 +198,8 @@ def get_region_boxes(output, conf_thresh, num_classes, anchors, num_anchors, onl
                                     box.append(tmp_conf)
                                     box.append(c)
                         box.append(embed[embed_ind])
+                        box.append(cy)
+                        box.append(cx)
                         boxes.append(box)
 
         all_boxes.append(boxes)
@@ -363,6 +365,10 @@ def do_detect(model, img, conf_thresh, nms_thresh, use_cuda=1):
     # output, embed = model(img)
     output, embed = model(img)
     output = output.data
+    
+    if use_cuda:
+        output = output.cuda()
+        embed = embed.cuda()
     # print("====================")
     # print(output.shape)
     # print("====================")
@@ -388,9 +394,9 @@ def do_detect(model, img, conf_thresh, nms_thresh, use_cuda=1):
         print('             nms : %f' % (t5 - t4))
         print('           total : %f' % (t5 - t0))
         print('-----------------------------------')
-    print('-----------------------------------')
-    print("embed size:", embed.size())
-    print('-----------------------------------')
+#     print('-----------------------------------')
+#     print("embed size:", embed.size())
+#     print('-----------------------------------')
     return boxes
 
 

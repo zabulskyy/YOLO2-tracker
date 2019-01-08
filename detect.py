@@ -6,7 +6,7 @@ from darknet import Darknet
 from utils import *
 
 
-def detect_with_model(model, image, verbose=True, use_cuda=0):
+def detect_with_model(model, image, verbose=True, use_cuda=1):
     if verbose:
         model.print_network()
 
@@ -32,7 +32,7 @@ def detect_with_model(model, image, verbose=True, use_cuda=0):
     return boxes
 
 
-def detect(cfgfile, weightfile, images, use_cuda=0):
+def detect(cfgfile, weightfile, images, use_cuda=1):
     cats = ["data/birds1.jpg", "data/birds2.jpg"]
     embs = []
 
@@ -103,7 +103,7 @@ def detect_cv2(cfgfile, weightfile, imgfile):
     else:
         namesfile = 'data/names'
 
-    use_cuda = 0
+    use_cuda = 1
     if use_cuda:
         m.cuda()
 

@@ -1,0 +1,3 @@
+*.weights
+*.avi
+notebooks/heatmap_results/
